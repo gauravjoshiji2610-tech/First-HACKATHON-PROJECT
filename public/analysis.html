@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Analysis Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="dashboard-bg">
+  <header class="dashboard-header">
+    <h1>Unnati AI Analysis Dashboard</h1>
+    <p>Real-time Health & Water Risk Monitoring</p>
+  </header>
+
+  <main class="dashboard-container">
+    <section class="card big-card">
+      <h2>Overall Risk: <span id="overallRisk" class="badge">Loading...</span></h2>
+    </section>
+
+    <section class="card">
+      <h3>High-Risk Locations</h3>
+      <ul id="highRiskList" class="list"></ul>
+    </section>
+
+    <section class="card">
+      <h3>Symptoms Trend</h3>
+      <canvas id="symptomChart"></canvas>
+    </section>
+
+    <section class="card">
+      <h3>Water Quality Issues</h3>
+      <canvas id="waterChart"></canvas>
+    </section>
+
+    <section class="card wide-card">
+      <h3>Disease Predictions by Location</h3>
+      <table id="diseaseTable" class="table">
+        <thead><tr><th>Location</th><th>Likely Diseases</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+  let symptomChart, waterChart;
+
+  async function loadAnalysis(){
+    try {
+      const res = await fetch('/api/analysis');
+      if(!res.ok) throw new Error('API failed');
+      const data = await res.json();
+
+      // --- 1. Overall Risk ---
+      const risk = document.getElementById('overallRisk');
+      risk.textContent = data.overall_risk || 'Unknown';
+      risk.className = 'badge ' + (
+        data.overall_risk === 'High' ? 'red' :
+        data.overall_risk === 'Medium' ? 'orange' :
+        data.overall_risk === 'Low' ? 'green' : ''
+      );
+
+      // --- 2. High Risk Locations ---
+      const hrList = document.getElementById('highRiskList');
+      hrList.innerHTML = (data.high_risk_locations && data.high_risk_locations.length)
+        ? data.high_risk_locations.map(l => `<li>${l}</li>`).join('')
+        : '<li>No high-risk areas</li>';
+
+      // --- 3. Disease Table ---
+      const tbody = document.querySelector('#diseaseTable tbody');
+      tbody.innerHTML = '';
+      if(data.location_summary){
+        for(const [loc, summary] of Object.entries(data.location_summary)){
+          const diseases = (summary.likely_diseases_top || []).join(', ') || 'None';
+          tbody.innerHTML += `<tr><td>${loc}</td><td>${diseases}</td></tr>`;
+        }
+      }
+
+      // --- 4. Symptom Chart ---
+      const labels = Object.keys(data.location_summary || {});
+      const feverData = Object.values(data.location_summary || {}).map(s => s.symptom_trends?.fever || 0);
+      const diarrheaData = Object.values(data.location_summary || {}).map(s => s.symptom_trends?.diarrhea || 0);
+      const jaundiceData = Object.values(data.location_summary || {}).map(s => s.symptom_trends?.jaundice || 0);
+
+      if(symptomChart) symptomChart.destroy();
+      symptomChart = new Chart(document.getElementById('symptomChart'), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Fever', data: feverData, backgroundColor:'#f39c12'},
+            { label: 'Diarrhea', data: diarrheaData, backgroundColor:'#e74c3c'},
+            { label: 'Jaundice', data: jaundiceData, backgroundColor:'#3498db'}
+          ]
+        },
+        options: { responsive: true, plugins:{legend:{position:'bottom'}} }
+      });
+
+      // --- 5. Water Chart ---
+      const waterIssues = Object.values(data.location_summary || {}).map(s => (s.top_issues || []).length);
+      if(waterChart) waterChart.destroy();
+      waterChart = new Chart(document.getElementById('waterChart'), {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Water Issues', data: waterIssues, backgroundColor:'#27ae60'}] },
+        options: { responsive: true }
+      });
+
+    } catch(err) {
+      alert('Failed to load analysis: ' + err.message);
+    }
+  }
+
+  loadAnalysis();
+  </script>
+</body>
+</html>
+

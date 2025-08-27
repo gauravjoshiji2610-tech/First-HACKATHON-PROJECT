@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Analysis Result</title>
+  <style>
+    pre {
+      background: #f4f4f4;
+      padding: 10px;
+      white-space: pre-wrap;
+      max-width: 600px;
+      margin: 20px auto;
+      border-radius: 5px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <h1>AI Analysis Result</h1>
+  <button id="fetchBtn">Fetch Analysis</button>
+  <pre id="analysisResult">Click button to get analysis.</pre>
+
+  <script>
+    async function fetchAnalysis() {
+      const resultElement = document.getElementById('analysisResult');
+      try {
+        const response = await fetch('/api/analyze');
+        if (!response.ok) {
+          resultElement.textContent = 'Error fetching analysis: ' + response.statusText;
+          return;
+        }
+        const data = await response.json();
+        resultElement.textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        resultElement.textContent = 'Fetch error: ' + error.message;
+      }
+    }
+
+    document.getElementById('fetchBtn').addEventListener('click', fetchAnalysis);
+  </script>
+</body>
+</html>

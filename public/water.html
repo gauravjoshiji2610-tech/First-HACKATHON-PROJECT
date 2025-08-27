@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Water Tester</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="form-card">
+  <h2>AI Water Quality Tester</h2>
+  <form id="waterForm">
+    <label>Location</label>
+    <input type="text" name="location" placeholder="Village / Source name" required>
+
+    <label>Turbidity (NTU):</label>
+    <input type="number" name="turbidity" step="0.1" placeholder="5–50" required>
+
+    <label>pH Level:</label>
+    <input type="number" name="pH" step="0.1" placeholder="0–14" required>
+
+    <label>Bacteria Count (/ml):</label>
+    <input type="number" name="bacteria_count" placeholder="0–200" required>
+
+    <button type="submit">Save Water Test</button>
+  </form>
+  <div class="result" id="waterResult"></div>
+  <p style="text-align:center;"><a href="/dashboard.html">⬅ Back to Dashboard</a></p>
+</div>
+
+<script>
+const waterForm = document.getElementById('waterForm');
+const waterResult = document.getElementById('waterResult');
+
+waterForm.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const data = {
+    location: waterForm.location.value,
+    turbidity: waterForm.turbidity.value,
+    pH: waterForm.pH.value,
+    bacteria_count: waterForm.bacteria_count.value
+  };
+
+  try {
+    const res = await fetch('/api/water-test',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(data)
+    });
+    const result = await res.json();
+    waterResult.style.display = 'block';
+    if(res.ok){
+      let level = 'Low';
+      if(data.bacteria_count > 150 || data.turbidity > 30) level = 'High';
+      else if(data.bacteria_count > 60 || data.turbidity > 15) level = 'Medium';
+      waterResult.textContent = `Saved water test (id ${result.id}). Risk level (heuristic): ${level}`;
+      waterResult.className = `result ${level}`;
+      waterForm.reset();
+    } else {
+      waterResult.textContent = result.message || 'Error! Could not save.';
+      waterResult.className='result High';
+    }
+  } catch(err){
+    waterResult.style.display = 'block';
+    waterResult.textContent='Error! Could not connect to server.';
+    waterResult.className='result High';
+  }
+});
+</script>
+</body>
+</html>

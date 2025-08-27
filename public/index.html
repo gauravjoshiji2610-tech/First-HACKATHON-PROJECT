@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unnati Smart Health Surveillance</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
+</head>
+<body class="home-bg">
+  <header class="navbar">
+    <h1>Unnati Smart Health</h1>
+  </header>
+
+  <main class="container">
+    <!-- Dashboard View -->
+    <div id="main-menu" class="dashboard-grid">
+      <div class="card nav-card" onclick="loadSection('disease.html')">
+        <i class="ri-heart-pulse-line icon"></i>
+        <h2>Health Reports</h2>
+        <p>Report symptoms from community</p>
+      </div>
+      <div class="card nav-card" onclick="loadSection('water.html')">
+        <i class="ri-drop-line icon"></i>
+        <h2>Water Quality</h2>
+        <p>Submit pH, turbidity, bacterial data</p>
+      </div>
+      <div class="card nav-card" onclick="loadSection('analysis.html')">
+        <i class="ri-bar-chart-box-line icon"></i>
+        <h2>AI Analysis</h2>
+        <p>View risk analysis & hotspots</p>
+      </div>
+    </div>
+
+    <!-- Dynamic Content Area -->
+    <div id="content-area" style="display:none;">
+      <button class="btn back-btn" onclick="goBack()">← Back</button>
+      <div id="dynamic-content"></div>
+    </div>
+  </main>
+
+  <script>
+    function loadSection(page){
+      document.getElementById('main-menu').style.display = 'none';
+      document.getElementById('content-area').style.display = 'block';
+      fetch(page)
+        .then(res => res.text())
+        .then(html => {
+          document.getElementById('dynamic-content').innerHTML = html;
+        })
+        .catch(err => {
+          document.getElementById('dynamic-content').innerHTML = '<p>Error loading section</p>';
+        });
+    }
+
+    function goBack(){
+      document.getElementById('content-area').style.display = 'none';
+      document.getElementById('dynamic-content').innerHTML = '';
+      document.getElementById('main-menu').style.display = 'grid';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Health Report Form</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="form-card">
+  <h2>Health Report Form</h2>
+  <form id="diseaseForm">
+    <label>Name:</label>
+    <input type="text" name="name" placeholder="Your Name">
+
+    <label>Age:</label>
+    <input type="number" name="age" placeholder="Your Age" min="1" max="120" required>
+
+    <label>Location:</label>
+    <input type="text" name="location" placeholder="Village / Ward / GPS label" required>
+
+    <label>Symptoms:</label>
+    <textarea name="symptoms" placeholder="Fever, diarrhea, vomiting, etc." required></textarea>
+
+    <label>Contact (optional):</label>
+    <input type="text" name="contact" placeholder="Phone number for follow-up">
+
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px">
+      <div>
+        <label>Turbidity (NTU)</label>
+        <input type="number" name="turbidity" step="0.1" placeholder="Optional">
+      </div>
+      <div>
+        <label>pH</label>
+        <input type="number" name="pH" step="0.1" placeholder="Optional">
+      </div>
+      <div>
+        <label>Bacteria (/ml)</label>
+        <input type="number" name="bacteria_count" placeholder="Optional">
+      </div>
+    </div>
+
+    <button type="submit">Submit Health Report</button>
+  </form>
+  <div class="result" id="diseaseResult"></div>
+  <p style="text-align:center;"><a href="/dashboard.html">⬅ Back to Dashboard</a></p>
+</div>
+
+<script>
+const diseaseForm = document.getElementById('diseaseForm');
+const diseaseResult = document.getElementById('diseaseResult');
+
+diseaseForm.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const payload = {
+    name: diseaseForm.name.value,
+    age: diseaseForm.age.value,
+    location: diseaseForm.location.value,
+    symptoms: diseaseForm.symptoms.value,
+    contact: diseaseForm.contact.value,
+    turbidity: diseaseForm.turbidity.value,
+    pH: diseaseForm.pH.value,
+    bacteria_count: diseaseForm.bacteria_count.value
+  };
+  try {
+    const res = await fetch('/api/health-report',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    const result = await res.json();
+    diseaseResult.style.display='block';
+    if(res.ok){
+      diseaseResult.textContent = `Saved. Heuristic: ${result.heuristic?.disease} (${result.heuristic?.risk}). AI overall: ${result.ai?.overall_risk}`;
+      diseaseResult.className='result ' + (result.heuristic?.risk || 'Low');
+      diseaseForm.reset();
+    }else{
+      diseaseResult.textContent = result.message || 'Error! Could not save.';
+      diseaseResult.className='result High';
+    }
+  } catch(err){
+    diseaseResult.style.display='block';
+    diseaseResult.textContent='Error! Could not connect to server.';
+    diseaseResult.className='result High';
+  }
+});
+</script>
+</body>
+</html>
